@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 
-package com.sensorsdata.analytics.android.sdk.visual.network;
+package com.library.net.core;
 
 import android.text.TextUtils;
+import android.util.Log;
 
-import com.sensorsdata.analytics.android.sdk.SALog;
+import com.library.net.BuildConfig;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -29,17 +30,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import static com.sensorsdata.analytics.android.sdk.util.Base64Coder.CHARSET_UTF8;
 
 class HttpUtils {
-    /**
-     * HTTP 状态码 307
-     */
-    private static final int HTTP_307 = 307;
 
-    static boolean needRedirects(int responseCode) {
-        return responseCode == HttpURLConnection.HTTP_MOVED_PERM || responseCode == HttpURLConnection.HTTP_MOVED_TEMP || responseCode == HTTP_307;
-    }
 
     static String getLocation(HttpURLConnection connection, String path) throws MalformedURLException {
         if (connection == null || TextUtils.isEmpty(path)) {
@@ -66,7 +59,7 @@ class HttpUtils {
         String buf;
         BufferedReader reader = null;
         try {
-            reader = new BufferedReader(new InputStreamReader(is, CHARSET_UTF8));
+            reader = new BufferedReader(new InputStreamReader(is,  "UTF-8"));
             StringBuilder sb = new StringBuilder();
             String line;
             while ((line = reader.readLine()) != null) {
@@ -74,16 +67,19 @@ class HttpUtils {
             }
             is.close();
             buf = sb.toString();
+            if (BuildConfig.DEBUG){
+                Log.e("HTTP", "response=" + buf);
+            }
             return buf;
         } catch (Exception e) {
-            SALog.printStackTrace(e);
+            e.printStackTrace();
         } finally {
             if (reader != null) {
                 try {
                     reader.close();
                     reader = null;
                 } catch (IOException e) {
-                    SALog.printStackTrace(e);
+                    e.printStackTrace();
                 }
             }
             if (is != null) {
@@ -91,7 +87,7 @@ class HttpUtils {
                     is.close();
                     is = null;
                 } catch (IOException e) {
-                    SALog.printStackTrace(e);
+                    e.printStackTrace();
                 }
             }
         }

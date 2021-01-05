@@ -1,5 +1,5 @@
 /*
- * Created by dengshiwei on 2019/06/03.
+ * Created by chenru on 2020/06/22.
  * Copyright 2015－2020 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,24 +15,9 @@
  * limitations under the License.
  */
 
-package com.sensorsdata.analytics.android.sdk;
+package com.library.net.core;
 
-/**
- * 网络类型
- */
-public interface SensorsNetworkType {
-    // NULL
-    int TYPE_NONE = 0;
-    // 2G
-    int TYPE_2G = 1;
-    // 3G
-    int TYPE_3G = 1 << 1;
-    // 4G
-    int TYPE_4G = 1 << 2;
-    // WIFI
-    int TYPE_WIFI = 1 << 3;
-    // 5G
-    int TYPE_5G = 1 << 4;
-    // ALL
-    int TYPE_ALL = 0xFF;
+public enum HttpMethod {
+    POST,
+    GET
 }

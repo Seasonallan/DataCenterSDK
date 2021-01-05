@@ -15,9 +15,7 @@
  * limitations under the License.
  */
 
-package com.sensorsdata.analytics.android.sdk.visual.network;
-
-import com.sensorsdata.analytics.android.sdk.ThreadNameConstants;
+package com.library.net.core;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -46,7 +44,7 @@ class HttpTaskManager {
                 if (executor == null) {
                     executor = new ThreadPoolExecutor(POOL_SIZE, POOL_SIZE,
                             0L, TimeUnit.MILLISECONDS,
-                            new LinkedBlockingQueue<Runnable>(), new ThreadFactoryWithName(ThreadNameConstants.THREAD_DEEP_LINK_REQUEST));
+                            new LinkedBlockingQueue<Runnable>(), new ThreadFactoryWithName("ThreadNameConstants.THREAD_DEEP_LINK_REQUEST"));
                 }
             }
         }

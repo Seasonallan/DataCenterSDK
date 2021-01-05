@@ -1,5 +1,5 @@
 /*
- * Created by zhangxiangwei on 2019/11/05.
+ * Created by chenru on 2020/06/22.
  * Copyright 2015－2020 Sensors Data Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,12 +15,22 @@
  * limitations under the License.
  */
 
-package com.sensorsdata.analytics.android.sdk;
+package com.library.net.core;
 
-public interface ThreadNameConstants {
-    String THREAD_APP_END_DATA_SAVE_TIMER = "SA.AppEndDataSaveTimerThread";
-    String THREAD_TASK_QUEUE = "SA.TaskQueueThread";
-    String THREAD_SEND_DISTINCT_ID = "SA.SendDistinctIDThread";
-    String THREAD_GET_SDK_REMOTE_CONFIG = "SA.GetSDKRemoteConfigThread";
-    String THREAD_DEEP_LINK_REQUEST = "SA.DeepLinkRequest";
+import java.util.Locale;
+
+public class RealResponse {
+    public String result;
+    public String errorMsg;
+    public String location;
+    public int code;
+    public long contentLength;
+    public Exception exception;
+
+    @Override
+    public String toString() {
+        return String.format(Locale.getDefault(), "code:%d\nresult:%s\nlocation:%s\nerrorMsg:%s\nexception:%s",
+                code, result, location, errorMsg,
+                exception == null ? "" : exception.getMessage());
+    }
 }

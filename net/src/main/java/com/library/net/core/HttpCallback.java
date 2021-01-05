@@ -15,13 +15,11 @@
  * limitations under the License.
  */
 
-package com.sensorsdata.analytics.android.sdk.visual.network;
+package com.library.net.core;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.text.TextUtils;
-
-import com.sensorsdata.analytics.android.sdk.SALog;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -44,7 +42,6 @@ public abstract class HttpCallback<T> {
             @Override
             public void run() {
                 onFailure(response.code, errorMessage);
-                onAfter();
             }
         });
     }
@@ -56,7 +53,6 @@ public abstract class HttpCallback<T> {
             @Override
             public void run() {
                 onResponse(obj);
-                onAfter();
             }
         });
     }
@@ -84,10 +80,6 @@ public abstract class HttpCallback<T> {
      */
     public abstract void onResponse(T response);
 
-    /**
-     * 访问网络成功或失败后调用
-     */
-    public abstract void onAfter();
 
     public static abstract class StringCallback extends HttpCallback<String> {
         @Override
@@ -104,14 +96,9 @@ public abstract class HttpCallback<T> {
                     return new JSONObject(result);
                 }
             } catch (JSONException e) {
-                SALog.printStackTrace(e);
+                e.printStackTrace();
             }
             return null;
-        }
-
-        @Override
-        public void onAfter() {
-
         }
     }
 }

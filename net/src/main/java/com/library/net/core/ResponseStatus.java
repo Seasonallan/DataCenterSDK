@@ -15,22 +15,23 @@
  * limitations under the License.
  */
 
-package com.sensorsdata.analytics.android.sdk.visual.network;
+package com.library.net.core;
 
-import java.util.Locale;
-
-public class RealResponse {
-    public String result;
-    public String errorMsg;
-    public String location;
-    public int code;
-    public long contentLength;
-    public Exception exception;
-
-    @Override
-    public String toString() {
-        return String.format(Locale.getDefault(), "code:%d\nresult:%s\nlocation:%s\nerrorMsg:%s\nexception:%s",
-                code, result, location, errorMsg,
-                exception == null ? "" : exception.getMessage());
-    }
+public enum ResponseStatus {
+    /**
+     * 成功
+     */
+    SUCCESS,
+    /**
+     * 解析错误
+     */
+    PARSE_ERROR,
+    /**
+     * 未查询到数据
+     */
+    NO_QUERY,
+    /**
+     * 请求获取参数失败
+     */
+    GET_PARAMS_FAILED
 }

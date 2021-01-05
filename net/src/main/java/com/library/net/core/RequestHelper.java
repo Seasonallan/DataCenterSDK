@@ -15,30 +15,28 @@
  * limitations under the License.
  */
 
-package com.sensorsdata.analytics.android.sdk.visual.network;
+package com.library.net.core;
 
 import android.text.TextUtils;
 
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.net.URLEncoder;
 import java.util.Map;
 
-import static com.sensorsdata.analytics.android.sdk.util.Base64Coder.CHARSET_UTF8;
 import static java.net.HttpURLConnection.HTTP_NO_CONTENT;
 import static java.net.HttpURLConnection.HTTP_OK;
 
 public class RequestHelper {
-    //重定向 URL
-    private boolean isRedirected = false;
 
     /**
      * 网络请求
      *
-     * @param url url
-     * @param paramsMap 键值对参数
-     * @param headerMap 请求头键值对
+     * @param url        url
+     * @param paramsMap  键值对参数
+     * @param headerMap  请求头键值对
      * @param retryCount 重试次数
-     * @param callBack 请求回调
+     * @param callBack   请求回调
      */
     private RequestHelper(HttpMethod method, String url, Map<String, String> paramsMap, Map<String, String> headerMap, int retryCount, HttpCallback callBack) {
         switch (method) {
@@ -54,11 +52,11 @@ public class RequestHelper {
     /**
      * POST 请求
      *
-     * @param url url
-     * @param jsonData json 格式参数
-     * @param headerMap 请求头键值对
+     * @param url        url
+     * @param jsonData   json 格式参数
+     * @param headerMap  请求头键值对
      * @param retryCount 重试次数
-     * @param callBack 请求回调
+     * @param callBack   请求回调
      */
     private RequestHelper(String url, String jsonData, Map<String, String> headerMap, int retryCount, HttpCallback callBack) {
         urlHttpPost(url, null, jsonData, headerMap, retryCount, callBack);
@@ -67,11 +65,11 @@ public class RequestHelper {
     /**
      * GET 请求
      *
-     * @param url url
-     * @param paramsMap 键值对参数
-     * @param headerMap 请求头键值对
+     * @param url        url
+     * @param paramsMap  键值对参数
+     * @param headerMap  请求头键值对
      * @param retryCount 重试次数
-     * @param callBack 请求回调
+     * @param callBack   请求回调
      */
     private void urlHttpGet(final String url, final Map<String, String> paramsMap, final Map<String, String> headerMap, final int retryCount, final HttpCallback callBack) {
         final int requestCount = retryCount - 1;
@@ -83,9 +81,6 @@ public class RequestHelper {
                     if (callBack != null) {
                         callBack.onSuccess(response);
                     }
-                } else if (!isRedirected && HttpUtils.needRedirects(response.code)) {
-                    isRedirected = true;
-                    urlHttpGet(response.location, paramsMap, headerMap, retryCount, callBack);
                 } else {
                     if (requestCount != 0) {
                         urlHttpGet(url, paramsMap, headerMap, requestCount, callBack);
@@ -102,12 +97,12 @@ public class RequestHelper {
     /**
      * POST 请求
      *
-     * @param url url
-     * @param paramsMap 键值对参数
-     * @param jsonData json 格式参数
-     * @param headerMap 请求头键值对
+     * @param url        url
+     * @param paramsMap  键值对参数
+     * @param jsonData   json 格式参数
+     * @param headerMap  请求头键值对
      * @param retryCount 重试次数
-     * @param callBack 请求回调
+     * @param callBack   请求回调
      */
     private void urlHttpPost(final String url, final Map<String, String> paramsMap,
                              final String jsonData, final Map<String, String> headerMap,
@@ -117,15 +112,13 @@ public class RequestHelper {
             @Override
             public void run() {
                 RealResponse response = new RealRequest().postData(url, getPostBody(paramsMap, jsonData), getPostBodyType(paramsMap, jsonData), headerMap);
-                if (response.code == HTTP_OK || response.code == HTTP_NO_CONTENT) {
+                //if (response.code == HTTP_OK || response.code == HTTP_NO_CONTENT) {
+                if (response.code < HttpURLConnection.HTTP_BAD_REQUEST){
                     if (callBack != null) {
                         callBack.onSuccess(response);
                     }
-                } else if (!isRedirected && HttpUtils.needRedirects(response.code)) {
-                    isRedirected = true;
-                    urlHttpPost(response.location, paramsMap, jsonData, headerMap, retryCount, callBack);
                 } else {
-                    if (requestCount != 0) {
+                    if (requestCount > 0) {
                         urlHttpPost(url, paramsMap, jsonData, headerMap, requestCount, callBack);
                     } else {
                         if (callBack != null) {
@@ -140,7 +133,7 @@ public class RequestHelper {
     /**
      * GET 请求 url 拼接
      *
-     * @param path 请求地址
+     * @param path      请求地址
      * @param paramsMap 参数键值对参数
      * @return GET 请求 url 链接
      */
@@ -162,7 +155,7 @@ public class RequestHelper {
     /**
      * 根据参数得到 body
      *
-     * @param params 键值对参数
+     * @param params  键值对参数
      * @param jsonStr json 格式参数
      * @return 请求 body
      */
@@ -192,9 +185,9 @@ public class RequestHelper {
                     } else {
                         result.append("&");
                     }
-                    result.append(URLEncoder.encode(entry.getKey(), CHARSET_UTF8));
+                    result.append(URLEncoder.encode(entry.getKey(), "UTF-8"));
                     result.append("=");
-                    result.append(URLEncoder.encode(entry.getValue(), CHARSET_UTF8));
+                    result.append(URLEncoder.encode(entry.getValue(), "UTF-8"));
                 }
                 return result.toString();
             } catch (UnsupportedEncodingException e) {
@@ -208,7 +201,7 @@ public class RequestHelper {
      * 获取请求的 Content-Type
      *
      * @param paramsMap 请求参数
-     * @param jsonStr 请求参数 json 字符串
+     * @param jsonStr   请求参数 json 字符串
      * @return Content-Type
      */
     private String getPostBodyType(Map<String, String> paramsMap, String jsonStr) {
