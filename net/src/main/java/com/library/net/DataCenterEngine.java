@@ -240,6 +240,10 @@ public class DataCenterEngine {
     }
 
     public void eventReport(DataEvent dataEvent) {
+        if (context == null){
+            Log.e("DataCenter", "Please start the engine before reporting the event!!!");
+            return;
+        }
         String key = dataEvent.getCacheString();
         CacheStrategy.saveSerialData(key, dataEvent, dir);
         if (DataStrategy.logcat) {
