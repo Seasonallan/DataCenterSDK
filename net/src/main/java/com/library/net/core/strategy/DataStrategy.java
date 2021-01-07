@@ -1,4 +1,6 @@
-package com.library.net;
+package com.library.net.core.strategy;
+
+import com.library.net.BuildConfig;
 
 /**
  * 报文上传策略
@@ -7,10 +9,11 @@ public class DataStrategy {
 
     public static DataStrategy sDefault = new DataStrategy();
 
+
     public enum UploadStrategy {
         IMMEDIATELY, //直接发送
         FREE, //空闲发送
-        DELAY; // 延迟发送
+        DELAY; //延迟发送
     }
 
     /**
@@ -48,11 +51,35 @@ public class DataStrategy {
      * @param encode
      * @return
      */
-    public DataStrategy encode(boolean encode) {
+    public DataStrategy encryptData(boolean encode) {
         this.encode = encode;
         return this;
     }
 
+    /**
+     * 是否捕捉异常
+     * @param catchException
+     * @return
+     */
+    public DataStrategy catchException(boolean catchException) {
+        this.catchException = catchException;
+        return this;
+    }
+
+    /**
+     * 是否打印日志
+     * @param log
+     * @return
+     */
+    public DataStrategy logcat(boolean log) {
+        logcat = log;
+        return this;
+    }
+
+    /**
+     * 是否打印日志，默认debug模式下打印，release下关闭
+     */
+    public static boolean logcat = BuildConfig.DEBUG;
 
     /**
      * 同时启动的上报线程数量
@@ -74,5 +101,10 @@ public class DataStrategy {
      * 是否加密
      */
     public boolean encode = false;
+
+    /**
+     * 是否捕捉异常
+     */
+    public boolean catchException = true;
 
 }

@@ -31,6 +31,7 @@ import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.library.net.BuildConfig;
+import com.library.net.core.strategy.DataStrategy;
 
 import org.json.JSONObject;
 
@@ -78,7 +79,7 @@ public class HttpUtils {
             }
             jsonObject.put("cpuVersion", Build.CPU_ABI);
         } catch (Exception e) {
-            if (BuildConfig.DEBUG)
+            if (DataStrategy.logcat)
                 e.printStackTrace();
         }
         return jsonObject;
@@ -111,7 +112,7 @@ public class HttpUtils {
             rate[1] = mi.availMem * 100 / mi.totalMem;
             rate[2] = mi.totalMem / (1024 * 1024);
         } catch (Exception e) {
-            if (BuildConfig.DEBUG)
+            if (DataStrategy.logcat)
                 e.printStackTrace();
         }
         return rate;
@@ -148,7 +149,7 @@ public class HttpUtils {
             }
 
         } catch (Exception e) {
-            if (BuildConfig.DEBUG)
+            if (DataStrategy.logcat)
                 e.printStackTrace();
         }
         return rate;
@@ -260,8 +261,8 @@ public class HttpUtils {
             }
             is.close();
             buf = sb.toString();
-            if (BuildConfig.DEBUG) {
-                Log.e("HTTP", "response=" + buf);
+            if (DataStrategy.logcat) {
+                Log.e("DataCenter", "response=" + buf);
             }
             return buf;
         } catch (Exception e) {

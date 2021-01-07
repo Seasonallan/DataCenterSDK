@@ -1,4 +1,4 @@
-package com.library.net.core;
+package com.library.net.core.strategy;
 
 import com.library.net.BuildConfig;
 import com.library.net.DataEvent;
@@ -13,7 +13,7 @@ import java.io.ObjectOutputStream;
 /**
  * 本地序列化数据存储方案
  */
-public class CacheFileUtil {
+public class CacheStrategy {
 
 
 
@@ -38,7 +38,7 @@ public class CacheFileUtil {
                 return (DataEvent) objectInputStream.readObject();
             }
         } catch (Exception e) {
-            if (BuildConfig.DEBUG){
+            if (DataStrategy.logcat){
                 e.printStackTrace();
             }
         }finally {
@@ -86,7 +86,7 @@ public class CacheFileUtil {
             objectOutputStream.writeObject(value);
             return true;
         } catch (Exception e) {
-            if (BuildConfig.DEBUG){
+            if (DataStrategy.logcat){
                 e.printStackTrace();
             }
         }finally {

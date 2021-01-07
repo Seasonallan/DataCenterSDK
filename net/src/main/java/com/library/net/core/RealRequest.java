@@ -21,6 +21,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.library.net.BuildConfig;
+import com.library.net.core.strategy.DataStrategy;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -66,9 +67,9 @@ class RealRequest {
      */
     RealResponse postData(String requestURL, String body, String bodyType, Map<String, String> headerMap) {
         BufferedWriter writer = null;
-        if (BuildConfig.DEBUG){
-            Log.e("HTTP", "url=" + requestURL);
-            Log.e("HTTP", "body=" + body);
+        if (DataStrategy.logcat){
+            Log.e("DataCenter", "url=" + requestURL);
+            Log.e("DataCenter", "body=" + body);
         }
         try {
             HttpURLConnection conn;

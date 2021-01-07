@@ -10,11 +10,12 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.library.net.core.CacheFileUtil;
+import com.library.net.core.strategy.CacheStrategy;
 import com.library.net.core.HttpCallback;
 import com.library.net.core.HttpMethod;
 import com.library.net.core.HttpUtils;
 import com.library.net.core.RequestHelper;
+import com.library.net.core.strategy.DataStrategy;
 
 import org.json.JSONObject;
 
@@ -61,6 +62,7 @@ public class DataCenterEngine {
     private CopyOnWriteArrayList<String> dataEventList;
 
     private String pageCode;
+
 
     /**
      * 获取当前页面的编码
@@ -116,6 +118,19 @@ public class DataCenterEngine {
         return instance();
     }
 
+    /**
+     * 配置环境
+     *
+     * @param authUrl   授权地址
+     * @param reportUrl 上报地址
+     * @return
+     */
+    public static DataCenterEngine environment(String authUrl, String reportUrl) {
+        instance().url_auth = authUrl;
+        instance().url_report = reportUrl;
+        return instance();
+    }
+
     private Thread.UncaughtExceptionHandler mOriginalHandler;
 
     /**
@@ -125,16 +140,6 @@ public class DataCenterEngine {
      */
     public static void start(Application application) {
         instance().init(application.getApplicationContext());
-        instance().mOriginalHandler = Thread.getDefaultUncaughtExceptionHandler();
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(@NonNull Thread thread, @NonNull Throwable ex) {
-                report(DataEvent.EXCEPTION(ex));
-                if (instance().mOriginalHandler != null) {
-                    instance().mOriginalHandler.uncaughtException(thread, ex);
-                }
-            }
-        });
 
         instance().token = application.getSharedPreferences("dc_status",
                 Context.MODE_PRIVATE).getString("token", null);
@@ -167,13 +172,19 @@ public class DataCenterEngine {
 
             @Override
             public void onActivityResumed(@NonNull Activity activity) {
+                String pageCode = null;
                 if (activity instanceof IPageCode) {
-                    setCurrentPageCode(((IPageCode) activity).getPageCode());
+                    pageCode = ((IPageCode) activity).getPageCode();
                 }
+                if (TextUtils.isEmpty(pageCode)) {
+                    pageCode = activity.getClass().getSimpleName();
+                }
+                setCurrentPageCode(pageCode);
                 if (System.currentTimeMillis() - pauseTime > 2 * 1000) {
                     //发送热启动
                     report(DataEvent.START(true));
                 }
+
             }
 
             @Override
@@ -212,14 +223,27 @@ public class DataCenterEngine {
                 dataEventList.add(file.getName());
             }
         }
-        //事件排序 dataEventList
+        //TODO:事件排序 dataEventList
+
+
+        //捕捉异常
+        if (dataStrategy.catchException) {
+            mOriginalHandler = Thread.getDefaultUncaughtExceptionHandler();
+            Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+                @Override
+                public void uncaughtException(@NonNull Thread thread, @NonNull Throwable ex) {
+                    report(DataEvent.EXCEPTION(ex));
+                    mOriginalHandler.uncaughtException(thread, ex);
+                }
+            });
+        }
     }
 
     public void eventReport(DataEvent dataEvent) {
         String key = dataEvent.getCacheString();
-        CacheFileUtil.saveSerialData(key, dataEvent, dir);
-        if (BuildConfig.DEBUG) {
-            Log.e("DataCenter", key + ">> " + new File(dir, key).isFile() + ", " + new File(dir, key).length());
+        CacheStrategy.saveSerialData(key, dataEvent, dir);
+        if (DataStrategy.logcat) {
+            Log.e("DataCenter", "eventReport(key:" + key + ", length:" + new File(dir, key).length() + ")");
         }
         dataEventList.add(0, key);
         if (consumeThreadCount < dataStrategy.threadCount) {
@@ -232,7 +256,7 @@ public class DataCenterEngine {
         consumeThreadCount--;
         for (DataEvent ev : dataEvent) {
             dataEventList.add(0, ev.getCacheString());
-            if (BuildConfig.DEBUG) {
+            if (DataStrategy.logcat) {
                 Log.e("DataCenter", ev.getCacheString() + ">> error");
             }
         }
@@ -244,7 +268,7 @@ public class DataCenterEngine {
         for (DataEvent ev : dataEvent) {
             String id = ev.getCacheString();
             new File(dir, id).delete();
-            if (BuildConfig.DEBUG){
+            if (DataStrategy.logcat) {
                 Log.e("DataCenter", "delete>>" + id);
             }
         }
@@ -257,17 +281,17 @@ public class DataCenterEngine {
                 auth();
             } else {
                 String key = dataEventList.remove(0);
-                if (BuildConfig.DEBUG) {
+                if (DataStrategy.logcat) {
                     Log.e("DataCenter", key);
                 }
-                DataEvent dataEvent = CacheFileUtil.getSerialData(key, dir);
+                DataEvent dataEvent = CacheStrategy.getSerialData(key, dir);
                 if (dataEvent == null) {
-                    if (BuildConfig.DEBUG) {
-                        Log.e("DataCenter", "empty");
-                        new File(dir, key).delete();
-                        continueTask();
-                        return;
+                    if (DataStrategy.logcat) {
+                        Log.e("DataCenter", key + " empty");
                     }
+                    new File(dir, key).delete();
+                    continueTask();
+                    return;
 
                 }
                 request(dataEvent);
@@ -368,7 +392,7 @@ public class DataCenterEngine {
                 if (jsonObject.has("data"))
                     response.data = jsonObject.getString("data");
             } catch (Exception e) {
-                if (BuildConfig.DEBUG)
+                if (DataStrategy.logcat)
                     e.printStackTrace();
             }
             return response;
