@@ -123,6 +123,7 @@ public class HttpUtils {
      *
      * @return
      */
+    @Deprecated
     public static int[] getCpu() {
         int[] rate = {0, 0};
 

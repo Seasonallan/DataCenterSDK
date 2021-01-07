@@ -17,7 +17,7 @@ maven { url 'https://jitpack.io' }
                 .user("10086")
                 .start(this);
 ```
-2、登录后可以设置用户ID
+2、登录后可以设置或切换用户ID
 ```
         DataCenterEngine.user("10086");
 ```
