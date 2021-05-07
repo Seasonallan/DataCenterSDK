@@ -59,7 +59,7 @@ public class DataEvent implements Serializable {
         dataEvent.eventType = 1;
         dataEvent.time = System.nanoTime();
         dataEvent.eventCode = "install";
-        dataEvent.pageCode = DataCenterEngine.getCurrentPageCode();
+        dataEvent.pageCode = "App_Global";
         dataEvent.installTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
 
         return dataEvent;
@@ -79,7 +79,7 @@ public class DataEvent implements Serializable {
         dataEvent.time = System.nanoTime();
         dataEvent.eventCode = isHot ? "hotBoot" : "coldBoot";
         dataEvent.startType = isHot ? 1 : 2;
-        dataEvent.pageCode = DataCenterEngine.getCurrentPageCode();
+        dataEvent.pageCode = "App_Global";
         dataEvent.startFinishiTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
         dataEvent.startElapsedTime = "0";
 

@@ -17,6 +17,6 @@ public class TestActivity extends BaseActivity {
 
     @Override
     public String getPageCode() {
-        return "sjjr";
+        return "TESTPAGE";
     }
 }

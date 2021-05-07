@@ -49,6 +49,7 @@ public class HttpUtils {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject.put("osType", "1");
+            jsonObject.put("apiVersion", "1.0");
             jsonObject.put("uid", userId);
             jsonObject.put("appId", appId);
             jsonObject.put("machineId", getUID(context));

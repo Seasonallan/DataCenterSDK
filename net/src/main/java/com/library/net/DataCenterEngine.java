@@ -10,17 +10,22 @@ import android.util.Log;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.library.net.core.strategy.CacheStrategy;
 import com.library.net.core.HttpCallback;
 import com.library.net.core.HttpMethod;
 import com.library.net.core.HttpUtils;
 import com.library.net.core.RequestHelper;
+import com.library.net.core.strategy.CacheStrategy;
 import com.library.net.core.strategy.DataStrategy;
 
 import org.json.JSONObject;
 
 import java.io.File;
+import java.security.MessageDigest;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
@@ -29,7 +34,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public class DataCenterEngine {
 
-    private String url_auth = "http://datacenter-developer-dev.aitdcoin.com/api/developer/v1/services/auth";
     private String url_report = "http://172.31.17.22:9889/api/point/v1/report";
 
     private String appId;
@@ -38,7 +42,6 @@ public class DataCenterEngine {
     private DataStrategy dataStrategy;
 
     private Context context;
-    private String token;
 
     private static volatile DataCenterEngine instance;
     private String userId;
@@ -121,12 +124,10 @@ public class DataCenterEngine {
     /**
      * 配置环境
      *
-     * @param authUrl   授权地址
      * @param reportUrl 上报地址
      * @return
      */
-    public static DataCenterEngine environment(String authUrl, String reportUrl) {
-        instance().url_auth = authUrl;
+    public static DataCenterEngine environment(String reportUrl) {
         instance().url_report = reportUrl;
         return instance();
     }
@@ -141,10 +142,8 @@ public class DataCenterEngine {
     public static void start(Application application) {
         instance().init(application.getApplicationContext());
 
-        instance().token = application.getSharedPreferences("dc_status",
-                Context.MODE_PRIVATE).getString("token", null);
         if (!instance().context.getSharedPreferences("dc_status",
-                Context.MODE_PRIVATE).getBoolean("install", false)) {
+                Context.MODE_PRIVATE).getBoolean("install2.0", false)) {
             //上传装机日志
             report(DataEvent.INSTALL());
         }
@@ -177,7 +176,7 @@ public class DataCenterEngine {
                     pageCode = ((IPageCode) activity).getPageCode();
                 }
                 if (TextUtils.isEmpty(pageCode)) {
-                    pageCode = activity.getClass().getSimpleName();
+                    pageCode = "Base_Page";
                 }
                 setCurrentPageCode(pageCode);
                 if (System.currentTimeMillis() - pauseTime > 2 * 1000) {
@@ -240,7 +239,7 @@ public class DataCenterEngine {
     }
 
     public void eventReport(DataEvent dataEvent) {
-        if (context == null){
+        if (context == null) {
             Log.e("DataCenter", "Please start the engine before reporting the event!!!");
             return;
         }
@@ -281,27 +280,24 @@ public class DataCenterEngine {
 
     private void continueTask() {
         if (dataEventList.size() > 0) {
-            if (TextUtils.isEmpty(token)) {
-                auth();
-            } else {
-                String key = dataEventList.remove(0);
-                if (DataStrategy.logcat) {
-                    Log.e("DataCenter", key);
-                }
-                DataEvent dataEvent = CacheStrategy.getSerialData(key, dir);
-                if (dataEvent == null) {
-                    if (DataStrategy.logcat) {
-                        Log.e("DataCenter", key + " empty");
-                    }
-                    new File(dir, key).delete();
-                    continueTask();
-                    return;
-
-                }
-                request(dataEvent);
+            String key = dataEventList.remove(0);
+            if (DataStrategy.logcat) {
+                Log.e("DataCenter", key);
             }
+            DataEvent dataEvent = CacheStrategy.getSerialData(key, dir);
+            if (dataEvent == null) {
+                if (DataStrategy.logcat) {
+                    Log.e("DataCenter", key + " empty");
+                }
+                new File(dir, key).delete();
+                continueTask();
+                return;
+
+            }
+            request(dataEvent);
         }
     }
+
 
     private int consumeThreadCount = 0;
 
@@ -310,7 +306,7 @@ public class DataCenterEngine {
         JSONObject jsonObject = HttpUtils.common(context, userId, appId);
         dataEvent.parseJson(jsonObject);
         new RequestHelper.Builder(HttpMethod.POST, url_report)
-                .header(headerMap())
+                .header(headerMap(jsonObject))
                 .jsonData(jsonObject.toString())
                 .callback(new ResponseParse() {
                     @Override
@@ -320,14 +316,16 @@ public class DataCenterEngine {
 
                     @Override
                     public void onResponse(Response response) {
+                        if (DataStrategy.logcat){
+                            Log.e("DataCenter", "response=" + response.code);
+                        }
                         if (response.code == 1) {//no authoritative, reAuth
                             eventError(dataEvent);
-                            auth();
                         } else {
                             consumeThreadCount--;
                             if (dataEvent.getEventType() == 1) {
                                 instance().context.getSharedPreferences("dc_status",
-                                        Context.MODE_PRIVATE).edit().putBoolean("install", true).commit();
+                                        Context.MODE_PRIVATE).edit().putBoolean("install2.0", true).commit();
                             }
                             eventConsume(dataEvent);//继续下一个
                         }
@@ -343,39 +341,6 @@ public class DataCenterEngine {
      */
     public static void report(DataEvent dataEvent) {
         instance().eventReport(dataEvent);
-    }
-
-    private void auth() {
-        consumeThreadCount++;
-        new RequestHelper.Builder(HttpMethod.POST, url_auth)
-                .params(paramsMap())
-                .callback(new ResponseParse() {
-                    @Override
-                    public void onFailure(int code, String errorMessage) {
-                        eventError();
-                    }
-
-                    @Override
-                    public void onResponse(Response response) {
-                        if (response.code == -1) {//没有对应的服务
-                            eventError();
-                        } else {
-                            token = response.data;
-                            instance().context.getSharedPreferences("dc_status",
-                                    Context.MODE_PRIVATE).edit().putString("token", token).commit();
-                            consumeThreadCount--;
-                            continueTask();//继续下一个
-                        }
-
-                    }
-                }).retryCount(dataStrategy.retryCount).execute();
-    }
-
-    private Map<String, String> paramsMap() {
-        Map<String, String> headerMap = new HashMap<>();
-        headerMap.put("appId", appId);
-        headerMap.put("appSecret", appSecret);
-        return headerMap;
     }
 
 
@@ -411,11 +376,56 @@ public class DataCenterEngine {
         public String data;
     }
 
-    private Map<String, String> headerMap() {
+    private Map<String, String> headerMap(JSONObject jsonObject) {
         Map<String, String> headerMap = new HashMap<>();
         headerMap.put("Content-Type", "application/json;charset=UTF-8");
-        headerMap.put("X-Auth-Token", token);
+        long timestamp = System.currentTimeMillis();
+        headerMap.put("timestamp", timestamp + "");
+        headerMap.put("sign", sign(jsonObject, timestamp));
         return headerMap;
     }
 
+
+    public String sign(JSONObject jsonObject, long timestamp) {
+        //1、取body中所有的参数按参数名进行排序（升序），依次取取参数名，参数值， 连接在一个字符串中得到 secretStr
+        Iterator<String> iterator = jsonObject.keys();
+        List<String> keys = new ArrayList<>();
+        while (iterator.hasNext()) {
+            keys.add(iterator.next());
+        }
+        Collections.sort(keys);
+        String secretStr = "";
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            String value = null;
+            try {
+                value = jsonObject.get(key) == null ? "" : jsonObject.get(key).toString();
+            } catch (Exception e) {
+            }
+            secretStr = secretStr + key + value;
+        }
+        //2、用 appId + secretStr + appSecret + timestamp 连接得到一个signStr
+        String signStr = appId + secretStr + appSecret + timestamp;
+        //3、sign 的值为 Md5Utils.getMD5(sing.toString())
+        return getMD5(signStr.getBytes());
+    }
+
+    public static String getMD5(byte[] bytes) {
+        char[] hexDigits = new char[]{'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+        char[] str = new char[32];
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(bytes);
+            byte[] tmp = md.digest();
+            int k = 0;
+            for (int i = 0; i < 16; ++i) {
+                byte byte0 = tmp[i];
+                str[k++] = hexDigits[byte0 >>> 4 & 15];
+                str[k++] = hexDigits[byte0 & 15];
+            }
+        } catch (Exception var8) {
+            var8.printStackTrace();
+        }
+        return new String(str);
+    }
 }

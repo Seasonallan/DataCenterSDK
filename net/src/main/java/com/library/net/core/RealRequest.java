@@ -69,6 +69,7 @@ class RealRequest {
         BufferedWriter writer = null;
         if (DataStrategy.logcat){
             Log.e("DataCenter", "url=" + requestURL);
+            Log.e("DataCenter", "header=" + headerMap.toString());
             Log.e("DataCenter", "body=" + body);
         }
         try {
