@@ -3,7 +3,7 @@
 maven { url 'https://jitpack.io' }
 # 第二步
 在app项目的build.gradle下的dependencies中添加DataCenter库依赖
-    implementation 'com.github.Seasonallan:DataCenterSDK:1.3'
+    implementation 'com.github.Seasonallan:DataCenterSDK:1.4'
 # 第三步
 使用DataCenterEngine调用库API
 
