@@ -3,7 +3,7 @@
 maven { url 'https://jitpack.io' }
 # 第二步
 在app项目的build.gradle下的dependencies中添加DataCenter库依赖
-    implementation 'com.github.Seasonallan:DataCenterSDK:1.2'
+    implementation 'com.github.Seasonallan:DataCenterSDK:1.3'
 # 第三步
 使用DataCenterEngine调用库API
 
@@ -13,7 +13,7 @@ maven { url 'https://jitpack.io' }
                 .strategy(DataStrategy.sDefault.threadCount(1).retryCount(0)
                         .strategy(DataStrategy.UploadStrategy.IMMEDIATELY).encryptData(false).catchException(true).logcat(true))
                 .configure("5d0660c0-b67d-47e3-b0eb-10649d4c382f", "ff93de60-b4bd-4f98-8ae3-2d7aeda08ede")
-                .environment("http://datacenter-developer-dev.aitdcoin.com/api/developer/v1/services/auth", "http://172.31.17.22:9889/api/point/v1/report")
+                .environment("http://172.93.1.253:9889/api/point/v1/report")
                 .user("10086")
                 .start(this);
 ```
@@ -28,6 +28,13 @@ maven { url 'https://jitpack.io' }
 4、操作日志上报：`DataCenterEngine.report(DataEvent.OPERATION("changeLanguage",
                         "切换语言", "之前【英语】修改成【中文】"));`
  
+
+# appId appSecret申请手册
+1、开发环境申请地址：http://datacenter-developer-dev.aitdcoin.com/  
+开发环境上报地址：http://172.93.1.253:9889/api/point/v1/report
+
+2、正式环境申请地址：https://datacenter-developer.aitdcoin.com/  
+开发环境上报地址：http://datacenter-push-log.aitdcoin.com/api/point/v1/report
 
 # 注意事项
 1、使用demo时，gradle版本不一致方案：

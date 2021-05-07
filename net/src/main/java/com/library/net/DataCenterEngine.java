@@ -292,7 +292,12 @@ public class DataCenterEngine {
                 new File(dir, key).delete();
                 continueTask();
                 return;
-
+            }
+            if (dataEvent.getEventType() == 3) {
+                if (DataStrategy.logcat) {
+                    Log.e("DataCenter", "delete>>" + key + " exception report: delete file first, for no callback to run");
+                }
+                new File(dir, key).delete();
             }
             request(dataEvent);
         }
@@ -316,7 +321,7 @@ public class DataCenterEngine {
 
                     @Override
                     public void onResponse(Response response) {
-                        if (DataStrategy.logcat){
+                        if (DataStrategy.logcat) {
                             Log.e("DataCenter", "response=" + response.code);
                         }
                         if (response.code == 1) {//no authoritative, reAuth
