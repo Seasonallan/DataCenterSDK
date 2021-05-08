@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.app.Application;
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.TextUtils;
 import android.util.Log;
 
@@ -152,6 +154,13 @@ public class DataCenterEngine {
 
         application.registerActivityLifecycleCallbacks(new Application.ActivityLifecycleCallbacks() {
             long pauseTime = System.currentTimeMillis();
+            Handler handler = new Handler() {
+                @Override
+                public void handleMessage(@NonNull Message msg) {
+                    super.handleMessage(msg);
+                    instance().startReport(false);
+                }
+            };
 
             @Override
             public void onActivityCreated(@NonNull Activity activity, @Nullable Bundle savedInstanceState) {
@@ -183,12 +192,17 @@ public class DataCenterEngine {
                     //发送热启动
                     report(DataEvent.START(true));
                 }
-
+                if (handler != null)
+                    handler.removeMessages(2021);
             }
 
             @Override
             public void onActivityPaused(@NonNull Activity activity) {
                 pauseTime = System.currentTimeMillis();
+                if (instance().dataStrategy.strategy == DataStrategy.UploadStrategy.FREE) {
+                    if (handler != null)
+                        handler.sendEmptyMessageDelayed(2021, 2 * 1000);
+                }
             }
 
             @Override
@@ -203,7 +217,10 @@ public class DataCenterEngine {
 
             @Override
             public void onActivityDestroyed(@NonNull Activity activity) {
-
+                if (instance().dataStrategy.strategy == DataStrategy.UploadStrategy.DELAY) {
+                    if (handler != null)
+                        handler.sendEmptyMessage(2021);
+                }
             }
         });
     }
@@ -222,7 +239,7 @@ public class DataCenterEngine {
                 dataEventList.add(file.getName());
             }
         }
-        //TODO:事件排序 dataEventList
+        //事件排序 dataEventList,根据优先级上传，暂时没有这个需求
 
 
         //捕捉异常
@@ -238,21 +255,6 @@ public class DataCenterEngine {
         }
     }
 
-    public void eventReport(DataEvent dataEvent) {
-        if (context == null) {
-            Log.e("DataCenter", "Please start the engine before reporting the event!!!");
-            return;
-        }
-        String key = dataEvent.getCacheString();
-        CacheStrategy.saveSerialData(key, dataEvent, dir);
-        if (DataStrategy.logcat) {
-            Log.e("DataCenter", "eventReport(key:" + key + ", length:" + new File(dir, key).length() + ")");
-        }
-        dataEventList.add(0, key);
-        if (consumeThreadCount < dataStrategy.threadCount) {
-            continueTask();
-        }
-    }
 
     //事件消费 异常
     private void eventError(DataEvent... dataEvent) {
@@ -338,6 +340,44 @@ public class DataCenterEngine {
                 }).retryCount(dataStrategy.retryCount).execute();
     }
 
+    /**
+     * 开始上报
+     *
+     * @param intelligent 是否智能上报，根据策略，false的话直接上报
+     */
+    public void startReport(boolean intelligent) {
+        if (context == null) {
+            Log.e("DataCenter", "Please start the engine before reporting the event!!!");
+            return;
+        }
+        if (consumeThreadCount < dataStrategy.threadCount) {
+            if (intelligent) {
+                if (dataStrategy.strategy == DataStrategy.UploadStrategy.IMMEDIATELY) {
+                    continueTask();
+                }
+            } else {
+                continueTask();
+            }
+        }
+    }
+
+    /**
+     * 保存事件
+     *
+     * @param dataEvent
+     */
+    public void eventInput(DataEvent dataEvent) {
+        if (context == null) {
+            Log.e("DataCenter", "Please start the engine before reporting the event!!!");
+            return;
+        }
+        String key = dataEvent.getCacheString();
+        CacheStrategy.saveSerialData(key, dataEvent, dir);
+        if (DataStrategy.logcat) {
+            Log.e("DataCenter", "eventReport(key:" + key + ", length:" + new File(dir, key).length() + ")");
+        }
+        dataEventList.add(0, key);
+    }
 
     /**
      * 上报日志
@@ -345,7 +385,8 @@ public class DataCenterEngine {
      * @param dataEvent
      */
     public static void report(DataEvent dataEvent) {
-        instance().eventReport(dataEvent);
+        instance().eventInput(dataEvent);
+        instance().startReport(true);
     }
 
 

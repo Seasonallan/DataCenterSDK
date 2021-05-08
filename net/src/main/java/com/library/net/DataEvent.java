@@ -2,7 +2,10 @@ package com.library.net;
 
 import org.json.JSONObject;
 
+import java.io.PrintWriter;
 import java.io.Serializable;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
@@ -78,7 +81,7 @@ public class DataEvent implements Serializable {
         dataEvent.eventType = 2;
         dataEvent.time = System.nanoTime();
         dataEvent.eventCode = isHot ? "hotBoot" : "coldBoot";
-        dataEvent.startType = isHot ? 1 : 2;
+        dataEvent.startType = isHot ? 2 : 1;
         dataEvent.pageCode = "App_Global";
         dataEvent.startFinishiTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
         dataEvent.startElapsedTime = "0";
@@ -100,10 +103,31 @@ public class DataEvent implements Serializable {
         dataEvent.pageCode = DataCenterEngine.getCurrentPageCode();
         dataEvent.exceptionTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(new Date());
         if (e != null) {
-            dataEvent.operatingItems = e.getLocalizedMessage();
-            dataEvent.eventDescription = e.getMessage();
+            dataEvent.operatingItems = e.getMessage();
+            dataEvent.eventDescription = collectExceptionInfo(e);
         }
         return dataEvent;
+    }
+
+    /**
+     * 获取捕获异常的信息
+     */
+    private static String collectExceptionInfo(Throwable ex) {
+        Writer mWriter = new StringWriter();
+        PrintWriter mPrintWriter = new PrintWriter(mWriter);
+        ex.printStackTrace(mPrintWriter);
+        ex.printStackTrace();
+        Throwable mThrowable = ex.getCause();
+        // 迭代栈队列把所有的异常信息写入writer中
+        while (mThrowable != null) {
+            mThrowable.printStackTrace(mPrintWriter);
+            // 换行 每个个异常栈之间换行
+            mPrintWriter.append("\r\n");
+            mThrowable = mThrowable.getCause();
+        }
+        // 记得关闭
+        mPrintWriter.close();
+        return mWriter.toString();
     }
 
 

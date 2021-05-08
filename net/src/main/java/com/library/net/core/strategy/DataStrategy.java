@@ -12,8 +12,8 @@ public class DataStrategy {
 
     public enum UploadStrategy {
         IMMEDIATELY, //直接发送
-        FREE, //空闲发送
-        DELAY; //延迟发送
+        FREE, //空闲发送，应用在后台的时候上报
+        DELAY; //延迟发送，在onDestroy时候上报
     }
 
     /**
