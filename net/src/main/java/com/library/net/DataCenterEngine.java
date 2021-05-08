@@ -145,7 +145,7 @@ public class DataCenterEngine {
         instance().init(application.getApplicationContext());
 
         if (!instance().context.getSharedPreferences("dc_status",
-                Context.MODE_PRIVATE).getBoolean("install2.0", false)) {
+                Context.MODE_PRIVATE).getBoolean("install2.01", false)) {
             //上传装机日志
             report(DataEvent.INSTALL());
         }
@@ -332,7 +332,7 @@ public class DataCenterEngine {
                             consumeThreadCount--;
                             if (dataEvent.getEventType() == 1) {
                                 instance().context.getSharedPreferences("dc_status",
-                                        Context.MODE_PRIVATE).edit().putBoolean("install2.0", true).commit();
+                                        Context.MODE_PRIVATE).edit().putBoolean("install2.01", true).commit();
                             }
                             eventConsume(dataEvent);//继续下一个
                         }
